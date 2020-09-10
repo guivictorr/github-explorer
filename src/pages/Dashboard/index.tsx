@@ -1,47 +1,64 @@
-import React from 'react';
+import React, {useState, FormEvent} from 'react';
 import { FiChevronRight } from 'react-icons/fi'
 
+import api from '../../services/api';
 import logoImg from '../../assets/logo.svg';
 
 import { Title, Form, Repositories } from './styles';
 
+interface Repository {
+  full_name: string,
+  description: string,
+  owner: {
+    login: string,
+    avatar_url: string,
+  },
+}
+
 const Dashboard: React.FC = () => {
+  const [repositories, setRepositories] = useState<Repository[]>([])
+  const [newRepo, setNewRepo] = useState('')
+
+  async function handleAddRepository(event: FormEvent){
+    event.preventDefault();
+
+    const response = await api.get(`repos/${newRepo}`)
+    const repository = response.data
+
+    setRepositories([...repositories, repository])
+    setNewRepo('');
+  }
+
   return (
     <>
       <img src={logoImg} alt="Github explorer"/>
       <Title>Explore repositórios no Github</Title>
 
-      <Form>
-        <input type="text" placeholder="Digite o nome do repositório"/>
+      <Form onSubmit={handleAddRepository}>
+        <input
+          value={newRepo}
+          onChange={event => setNewRepo(event.target.value)}
+          type="text"
+          placeholder="Digite o nome do repositório"
+        />
         <button type="submit">Pesquisar</button>
       </Form>
 
       <Repositories>
-        <a href="#">
-          <img
-            src="https://avatars3.githubusercontent.com/u/55333929?s=460&u=ee19ecf53d37b8dfc4492d50293a46e6fa9df302&v=4"
-            alt="Guilherme Victor"
-          />
-          <div>
-            <strong>guivictorr/github-explorer</strong>
-            <p>Aplicativo legal</p>
-          </div>
+        {repositories.map(repository => (
+          <a key={repository.full_name}href="#">
+            <img
+              src={repository.owner.avatar_url}
+              alt={repository.owner.login}
+            />
+            <div>
+              <strong>{repository.full_name}</strong>
+              <p>{repository.description}</p>
+            </div>
 
-          <FiChevronRight size={20}/>
-        </a>
-
-        <a href="#">
-          <img
-            src="https://avatars3.githubusercontent.com/u/55333929?s=460&u=ee19ecf53d37b8dfc4492d50293a46e6fa9df302&v=4"
-            alt="Guilherme Victor"
-          />
-          <div>
-            <strong>guivictorr/github-explorer</strong>
-            <p>Aplicativo legal</p>
-          </div>
-
-          <FiChevronRight size={20}/>
-        </a>
+            <FiChevronRight size={20}/>
+          </a>
+        ))}
       </Repositories>
     </>
   );
